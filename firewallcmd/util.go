@@ -3,6 +3,8 @@ package firewallcmd
 import (
 	"fmt"
 	"os/exec"
+	"regexp"
+	"strings"
 )
 
 //EnableRichRuleForIP enables rich rule for IP access + reloads
@@ -50,4 +52,34 @@ func reload() (*exec.Cmd, []byte, error) {
 	cmd := exec.Command("firewall-cmd", "--reload")
 	output, err := cmd.CombinedOutput()
 	return cmd, output, err
+}
+
+//GetIPSInFirewall gets IPs currently in firewall
+func GetIPSInFirewall() ([]string, error) {
+
+	var ipsInFirewall []string
+	cmd := exec.Command("firewall-cmd", "--zone=public", "--list-rich-rules")
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return nil, fmt.Errorf("error while fetching IPs from firewall-cmd, err: %v", err)
+	}
+	richRules := string(output)
+	//rule family="ipv4" source address="73.223.28.39/32" port port="22" protocol="tcp" accept
+	//rule family="ipv4" source address="73.223.28.40/32" port port="22" protocol="tcp" accept
+
+	ruleLines := strings.Split(richRules, "\n")
+
+	stringToSearch := "address=\""
+	for _, rule := range ruleLines {
+		//fmt.Println(line)
+		//r, _ := regexp.Compile("source address=\"[0-9]*(.)")
+		r, _ := regexp.Compile(stringToSearch + "[0-9.]*")
+		ipAddr := strings.TrimPrefix(r.FindString(rule), stringToSearch)
+		if ipAddr != "" {
+			ipsInFirewall = append(ipsInFirewall, ipAddr)
+			fmt.Println(ipAddr)
+		}
+	}
+
+	return ipsInFirewall, err
 }

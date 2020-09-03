@@ -28,7 +28,7 @@ build-linux: # example: make build-linux DB_PATH=/dir/to/db
 local-build:
 	go build -ldflags "-X github.com/prashantgupta24/firewalld-rest/db.pathFromEnv=$(DB_PATH)" -o build/firewalld-rest cmd/main.go
 copy: build-linux
-	scp build/firewalld-rest root@<server>:/root/rest
+	scp build/firewalld-rest root@ocp.zinox.com:/root/rest
 clean-db:
 	rm -f *.db
 test:
